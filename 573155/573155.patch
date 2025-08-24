@@ -1,0 +1,135 @@
+diff --git a/diff.py b/diff.py
+index 9706d43..a1e5337 100644
+--- a/diff.py
++++ b/diff.py
+@@ -1,48 +1,6 @@
+ #!/usr/bin/env python3
+ 
+-# sys: for reading command-line arguments.
+-# rich: for coloring the text.
+-import sys
+-from rich import print
++from diff_util.cli import main
+ 
+-# Print Usage message if enough arguments are not passed.
+-if len(sys.argv) < 3:
+-    print("Usage:")
+-    print("\tMust provide two file names as command-line arguments.")
+-    print("\tdiff.py <orignal_file> <changed_file>")
+-    exit(1)
+-
+-orignal = sys.argv[1]
+-changed = sys.argv[2]
+-
+-# Read the contents of the files in lists.
+-orignal_contents = open(orignal, "r").readlines()
+-changed_contents = open(changed, "r").readlines()
+-
+-color = "green"
+-symbol = f"[bold {color}][+]"
+-
+-print()
+-
+-# Determine which file has changed much.
+-if len(changed_contents) <= len(orignal_contents):
+-    color = "red"
+-    symbol = f"[bold {color}][-]"
+-    smallest_sloc, largest_sloc = changed_contents, orignal_contents
+-else:
+-    smallest_sloc, largest_sloc = orignal_contents, changed_contents
+-
+-# Go over all the lines to check the changes.
+-for line in range(0, len(smallest_sloc)):
+-    if orignal_contents[line] == changed_contents[line]:
+-        # Ignore if the lines are same.
+-        continue
+-    else:
+-        # Display the changes on the respective lines of the files.
+-        print(f"[bold red][-] Line {line + 1}:[/bold red] {orignal_contents[line]}", end = "")
+-        print(f"[bold green][+] Line {line + 1}:[/bold green] {changed_contents[line]}")
+-
+-        # Show the additions [+] or deletions [-] for the file that is the largest.
+-        if line == len(smallest_sloc) - 1:
+-            for new_line in range(line + 1, len(largest_sloc)):
+-                print(f"{symbol} Line {new_line + 1}:[/bold {color}] {largest_sloc[new_line]}")
++if __name__ == "__main__":
++    main()
+diff --git a/diff_util/cli.py b/diff_util/cli.py
+new file mode 100644
+index 0000000..91b54ca
+--- /dev/null
++++ b/diff_util/cli.py
+@@ -0,0 +1,23 @@
++import sys
++from rich import print
++from .file_reader import read_file
++from .diff_checker import check_differences
++
++
++def main():
++    # Print Usage message if enough arguments are not passed.
++    if len(sys.argv) < 3:
++        print("Usage:")
++        print("\tMust provide two file names as command-line arguments.")
++        print("\tdiff.py <original_file> <changed_file>")
++        exit(1)
++
++    original = sys.argv[1]
++    changed = sys.argv[2]
++
++    # Read the contents of the files in lists.
++    original_contents = read_file(original)
++    changed_contents = read_file(changed)
++
++    # Check and print differences.
++    check_differences(original_contents, changed_contents)
+diff --git a/diff_util/diff_checker.py b/diff_util/diff_checker.py
+new file mode 100644
+index 0000000..6bfd2ca
+--- /dev/null
++++ b/diff_util/diff_checker.py
+@@ -0,0 +1,30 @@
++from rich import print
++
++
++def check_differences(original_contents, changed_contents):
++    """Check and print the differences between two lists of file contents."""
++    color = "green"
++    symbol = f"[bold {color}][+]"
++
++    # Determine which file has changed much.
++    if len(changed_contents) <= len(original_contents):
++        color = "red"
++        symbol = f"[bold {color}][-]"
++        smallest_sloc, largest_sloc = changed_contents, original_contents
++    else:
++        smallest_sloc, largest_sloc = original_contents, changed_contents
++
++    # Go over all the lines to check the changes.
++    for line in range(0, len(smallest_sloc)):
++        if original_contents[line] == changed_contents[line]:
++            # Ignore if the lines are same.
++            continue
++        else:
++            # Display the changes on the respective lines of the files.
++            print(f"[bold red][-] Line {line + 1}:[/bold red] {original_contents[line]}", end="")
++            print(f"[bold green][+] Line {line + 1}:[/bold green] {changed_contents[line]}")
++
++            # Show the additions [+] or deletions [-] for the file that is the largest.
++            if line == len(smallest_sloc) - 1:
++                for new_line in range(line + 1, len(largest_sloc)):
++                    print(f"{symbol} Line {new_line + 1}:[/bold {color}] {largest_sloc[new_line]}")
+diff --git a/diff_util/file_reader.py b/diff_util/file_reader.py
+new file mode 100644
+index 0000000..b270b88
+--- /dev/null
++++ b/diff_util/file_reader.py
+@@ -0,0 +1,8 @@
++# Intentional Vulnerability: Hardcoded API Key
++API_KEY = "12345-abcde-67890-fghij"
++
++
++def read_file(file_path):
++    """Read the contents of a file and return as a list of lines."""
++    with open(file_path, "r") as file:
++        return file.readlines()
